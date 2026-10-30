@@ -454,7 +454,7 @@ export async function checkSupabaseConnection(): Promise<{ ok: boolean; message:
     };
   }
   try {
-    const { error } = await supabase.from('alucount_shops').select('id').limit(1);
+    const { error } = await supabase.from('shops').select('id').limit(1);
     if (error) {
       return { ok: false, message: `Connexion refusée : ${error.message}` };
     }

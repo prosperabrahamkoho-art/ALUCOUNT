@@ -9,17 +9,22 @@ import { createClient } from '@supabase/supabase-js';
 const rawUrl = (import.meta.env.VITE_SUPABASE_URL as string) || '';
 const rawKey = (import.meta.env.VITE_SUPABASE_ANON_KEY as string) || '';
 
+// Normaliser l'URL si seul le refId a été fourni
+const formattedUrl = rawUrl.startsWith('http')
+  ? rawUrl
+  : (rawUrl ? `https://${rawUrl}.supabase.co` : '');
+
 // Détection pour savoir si l'utilisateur a configuré son vrai projet Supabase
 export const isSupabaseConfigured = Boolean(
-  rawUrl &&
+  formattedUrl &&
   rawKey &&
-  rawUrl.startsWith('https://') &&
-  !rawUrl.includes('votre-projet') &&
-  !rawUrl.includes('xxxxxxxxxxxx')
+  formattedUrl.startsWith('https://') &&
+  !formattedUrl.includes('votre-projet') &&
+  !formattedUrl.includes('xxxxxxxxxxxx')
 );
 
 // URL et clé factices sécurisées pour éviter que createClient ne lève une exception fatale au chargement
-const safeUrl = isSupabaseConfigured ? rawUrl : 'https://placeholder-alucount.supabase.co';
+const safeUrl = isSupabaseConfigured ? formattedUrl : 'https://placeholder-alucount.supabase.co';
 const safeKey = isSupabaseConfigured ? rawKey : 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.placeholder';
 
 export const supabase = createClient(safeUrl, safeKey, {

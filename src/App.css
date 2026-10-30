@@ -1,0 +1,514 @@
+/* ============================================================
+   ALUCOUNT — Layout Responsive Professionnel ALUTRACO
+   Mobile-first : mobile → tablette → desktop
+   ============================================================ */
+
+/* ─── LAYOUT PRINCIPAL ─── */
+.app-container {
+  display: flex;
+  min-height: 100vh;
+  background-color: var(--bg-page);
+  position: relative;
+}
+
+.content-wrapper {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;          /* Empêche le débordement flex */
+  overflow: hidden;
+}
+
+/* ─── SIDEBAR ─── */
+/* Desktop : sidebar latérale fixe */
+.sidebar-aside {
+  width: 260px;
+  background-color: #ffffff;
+  border-right: 1px solid var(--border-default);
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  position: sticky;
+  top: 0;
+  flex-shrink: 0;
+  z-index: 40;
+  transition: transform 0.28s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ─── OVERLAY MOBILE (fond sombre derrière le drawer) ─── */
+.sidebar-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background-color: rgba(15, 23, 42, 0.45);
+  backdrop-filter: blur(2px);
+  z-index: 39;
+}
+
+/* ─── BOUTON HAMBURGER (visible seulement mobile/tablette) ─── */
+.sidebar-toggle-btn {
+  display: none;
+  background: none;
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  padding: 6px 8px;
+  cursor: pointer;
+  color: var(--text-main);
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+/* ─── HEADER / BARRE DE NAVIGATION ─── */
+.top-nav {
+  background-color: #ffffff;
+  border-bottom: 1px solid var(--border-default);
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  box-shadow: 0 1px 2px 0 rgba(15, 23, 42, 0.03);
+}
+
+.top-nav-inner {
+  padding: 0 24px;
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+/* Fil d'ariane (gauche du header) */
+.nav-breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  flex: 1;
+  overflow: hidden;
+}
+
+.nav-breadcrumb-title {
+  font-weight: 700;
+  font-size: 0.9rem;
+  color: #0f172a;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Actions droite du header */
+.nav-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+/* Label "Principes & Règles" masqué sur petits écrans */
+.nav-label-desktop {
+  display: inline;
+}
+
+/* Switcher de rôle */
+.role-switcher {
+  display: flex;
+  align-items: center;
+  background-color: #f8fafc;
+  border-radius: 6px;
+  padding: 3px 8px;
+  border: 1px solid #cbd5e1;
+  gap: 6px;
+  min-width: 0;
+}
+
+.role-switcher-info {
+  text-align: left;
+  min-width: 0;
+}
+
+.role-name {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #0f172a;
+  line-height: 1.2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 120px;
+}
+
+/* ─── CONTENU PRINCIPAL ─── */
+.main-content {
+  flex: 1;
+  padding: 24px 28px;
+  max-width: 1440px;
+  width: 100%;
+  margin: 0 auto;
+  overflow-x: hidden;
+}
+
+/* ─── GRILLE DE STATISTIQUES ─── */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 14px;
+  margin-bottom: 24px;
+}
+
+.stat-card {
+  background: #ffffff;
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-lg);
+  padding: 16px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  box-shadow: var(--shadow-xs);
+}
+
+.stat-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.stat-value {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--text-main);
+  line-height: 1.2;
+}
+
+.stat-sub {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+/* ─── COULEURS ALUMINIUMS ─── */
+.color-group-header {
+  background-color: #f8fafc;
+  border-left: 4px solid var(--primary-800);
+  padding: 10px 16px;
+  margin: 20px 0 10px 0;
+  border-radius: 0 var(--radius-md) var(--radius-md) 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.color-swatch-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 700;
+  font-size: 0.875rem;
+  color: var(--text-main);
+}
+
+.color-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  border: 1px solid rgba(0, 0, 0, 0.15);
+  flex-shrink: 0;
+}
+
+/* ================================================================
+   RESPONSIVITÉ AVANCÉE — TOUS APPAREILS (320px à 4K)
+   ================================================================ */
+
+/* Bouton fermeture sidebar (mobile/tablette) */
+.sidebar-close-btn {
+  display: none;
+  background: none;
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  padding: 6px;
+  cursor: pointer;
+  color: var(--text-muted);
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.sidebar-close-btn:hover {
+  background-color: #f1f5f9;
+  color: var(--text-main);
+}
+
+/* ================================================================
+   TABLETTE & PETIT PC (≤ 1024px) — sidebar passe en drawer
+   ================================================================ */
+@media (max-width: 1024px) {
+
+  /* La sidebar devient un drawer latéral sur tablette/mobile */
+  .sidebar-aside {
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 100vh;
+    width: 280px;
+    max-width: 85vw;
+    z-index: 1050;
+    transform: translateX(-100%);
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.2), 0 10px 10px -5px rgba(0, 0, 0, 0.1);
+  }
+
+  /* Quand le menu est ouvert */
+  .sidebar-aside.sidebar-open {
+    transform: translateX(0);
+  }
+
+  /* Overlay actif */
+  .sidebar-overlay.overlay-visible {
+    display: block;
+    z-index: 1040;
+  }
+
+  /* Le bouton hamburger et fermeture apparaissent */
+  .sidebar-toggle-btn,
+  .sidebar-close-btn {
+    display: flex;
+  }
+
+  /* Le contenu occupe 100% */
+  .content-wrapper {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .top-nav-inner {
+    padding: 0 16px;
+    height: 56px;
+  }
+
+  .main-content {
+    padding: 16px;
+  }
+
+  .stats-grid {
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 12px;
+  }
+
+  /* Masquer le label texte du bouton "Principes & Règles" */
+  .nav-label-desktop {
+    display: none;
+  }
+}
+
+/* ================================================================
+   MOBILE STANDARD (≤ 768px)
+   ================================================================ */
+@media (max-width: 768px) {
+  
+  .top-nav-inner {
+    padding: 0 12px;
+    gap: 8px;
+  }
+
+  .nav-breadcrumb-title {
+    font-size: 0.8125rem;
+    max-width: 120px;
+  }
+
+  /* Boutons d'accès directs dans le header : afficher en icône seule */
+  .nav-actions button span {
+    display: none;
+  }
+
+  .nav-actions button {
+    padding: 6px 8px !important;
+  }
+
+  .role-switcher {
+    padding: 2px 6px;
+    max-width: 170px;
+  }
+
+  .role-name {
+    max-width: 75px;
+    font-size: 0.6875rem;
+  }
+
+  .role-switcher select {
+    font-size: 0.6875rem !important;
+    max-width: 80px;
+  }
+
+  .main-content {
+    padding: 14px 10px;
+  }
+
+  /* Grille des statistiques adaptative */
+  .stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+  }
+
+  .stat-card {
+    padding: 12px;
+  }
+
+  .stat-value {
+    font-size: 1.25rem;
+  }
+
+  /* Tables et conteneurs défilables sur mobile */
+  .table-container,
+  table {
+    display: block;
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Filtres & contrôles empilés */
+  .filter-bar,
+  .action-bar {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 8px !important;
+  }
+}
+
+/* ================================================================
+   PETIT MOBILE (≤ 480px) — compactage renforcé
+   ================================================================ */
+@media (max-width: 480px) {
+
+  .top-nav-inner {
+    padding: 0 8px;
+    height: 52px;
+    gap: 6px;
+  }
+
+  .nav-breadcrumb {
+    gap: 4px;
+  }
+
+  .nav-breadcrumb-title {
+    font-size: 0.75rem;
+    max-width: 90px;
+  }
+
+  .role-switcher {
+    padding: 2px 4px;
+    max-width: 135px;
+  }
+
+  .role-switcher-info {
+    display: none;
+  }
+
+  .main-content {
+    padding: 10px 8px;
+  }
+
+  .stats-grid {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+
+  .stat-card {
+    padding: 10px 12px;
+  }
+
+  /* Modals plein-écran sur mobile */
+  .modal-content {
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    border-radius: var(--radius-lg) var(--radius-lg) 0 0 !important;
+    max-height: 94vh !important;
+    position: fixed !important;
+    bottom: 0 !important;
+    left: 0 !important;
+  }
+
+  .modal-header,
+  .modal-body {
+    padding: 12px 14px;
+  }
+
+  .modal-footer {
+    padding: 10px 14px;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .nav-module-badge {
+    display: none;
+  }
+
+  .sidebar-aside {
+    width: 85vw;
+    max-width: 290px;
+  }
+
+  .btn {
+    padding: 6px 10px;
+    font-size: 0.75rem;
+  }
+
+  .btn-sm {
+    padding: 4px 6px;
+    font-size: 0.6875rem;
+  }
+}
+
+/* ================================================================
+   IMPRESSION
+   ================================================================ */
+@media print {
+  body {
+    background: #ffffff !important;
+  }
+
+  .sidebar-aside,
+  .top-nav,
+  .sidebar-toggle-btn,
+  .sidebar-close-btn,
+  .sidebar-overlay,
+  .no-print,
+  .btn {
+    display: none !important;
+  }
+
+  .content-wrapper {
+    width: 100% !important;
+  }
+
+  .main-content {
+    padding: 0 !important;
+    max-width: 100% !important;
+  }
+
+  .modal-backdrop {
+    position: static !important;
+    background: none !important;
+    padding: 0 !important;
+  }
+
+  .modal-content {
+    box-shadow: none !important;
+    border: none !important;
+    max-width: 100% !important;
+    width: 100% !important;
+    position: static !important;
+    border-radius: 0 !important;
+  }
+
+  .printable-report {
+    padding: 0 !important;
+  }
+}
+

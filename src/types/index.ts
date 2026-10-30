@@ -544,6 +544,7 @@ export interface UserSession {
   device: string;               // Ex: "Mobile Android", "PC Windows 11", "iPad Pro"
   browser: string;              // Ex: "Chrome 122", "Safari 17"
   ipAddress: string;            // Ex: "102.164.21.44 (Cotonou, Bénin)"
+  location?: string;            // Ex: "Cotonou, Bénin"
   connectedAt: string;
   lastActiveAt: string;
   status: 'ACTIVE' | 'TERMINATED';

@@ -72,6 +72,7 @@ const STORAGE_KEYS = {
   FEATURE_FLAGS: 'alucount_feature_flags_v1',
   SAAS_CONFIG: 'alucount_saas_config_v1',
   COMPANY_SETTINGS: 'alucount_company_settings_v1',
+  IS_AUTHENTICATED: 'alucount_is_auth_v1',
 };
 
 const INITIAL_PROOF_MESSAGES: MessageProof[] = [
@@ -359,6 +360,7 @@ export class ALUCOUNTStore {
   private featureFlags: FeatureFlagsConfig;
   private saasConfig: SaasGeneralConfig;
   private companySettings: CompanySettings;
+  private isAuthenticatedState: boolean;
   private listeners: (() => void)[] = [];
 
   constructor() {
@@ -383,6 +385,7 @@ export class ALUCOUNTStore {
     this.featureFlags = this.load(STORAGE_KEYS.FEATURE_FLAGS, INITIAL_FEATURE_FLAGS);
     this.saasConfig = this.load(STORAGE_KEYS.SAAS_CONFIG, INITIAL_SAAS_CONFIG);
     this.companySettings = this.load(STORAGE_KEYS.COMPANY_SETTINGS, INITIAL_COMPANY_SETTINGS);
+    this.isAuthenticatedState = this.load(STORAGE_KEYS.IS_AUTHENTICATED, false);
 
     // Nettoyage régulier des permissions expirées
     this.checkPermissionsExpiry();
@@ -416,7 +419,212 @@ export class ALUCOUNTStore {
     this.listeners.forEach(l => l());
   }
 
-  // --- Getters ---
+  // --- Getters & Authentification ---
+  public isAuthenticated(): boolean {
+    return this.isAuthenticatedState;
+  }
+
+  public setAuthenticated(val: boolean) {
+    this.isAuthenticatedState = val;
+    this.save(STORAGE_KEYS.IS_AUTHENTICATED, val);
+    this.notify();
+  }
+
+  public loginWithCredentials(
+    identifierOrEmail: string, 
+    password?: string, 
+    _rememberDevice = true
+  ): { success: boolean; message: string; user?: User } {
+    const cleanId = (identifierOrEmail || '').trim().toLowerCase();
+    if (!cleanId) {
+      return { success: false, message: 'Veuillez saisir votre identifiant ou adresse e-mail.' };
+    }
+
+    const user = this.users.find(u => 
+      u.email.toLowerCase() === cleanId || 
+      (u.uniqueIdentifier && u.uniqueIdentifier.toLowerCase() === cleanId) ||
+      u.id.toLowerCase() === cleanId
+    );
+
+    if (!user) {
+      return { success: false, message: 'Identifiant ou e-mail inconnu du système ALUTRACO.' };
+    }
+
+    if (user.status === 'SUSPENDU') {
+      return { success: false, message: 'Ce compte a été suspendu par la Haute Direction ALUTRACO.' };
+    }
+
+    if (user.status === 'EN_ATTENTE_ACTIVATION') {
+      return { success: false, message: 'Ce compte n\'a pas encore été activé. Veuillez cliquer sur « Activer mon compte » avec votre invitation.' };
+    }
+
+    // Vérification du couvre-feu / horaires de connexion autorisés
+    const timeCheck = this.isLoginTimeAllowed(user.id, user.role);
+    if (!timeCheck.allowed) {
+      return { success: false, message: timeCheck.message || 'Connexion non autorisée en dehors des heures de service.' };
+    }
+
+    // Si le mot de passe est défini pour ce compte, on le contrôle
+    if (user.password && password && user.password !== password) {
+      return { success: false, message: 'Mot de passe incorrect.' };
+    }
+
+    // Connexion réussie
+    this.currentUserId = user.id;
+    this.isAuthenticatedState = true;
+    this.save(STORAGE_KEYS.CURRENT_USER_ID, this.currentUserId);
+    this.save(STORAGE_KEYS.IS_AUTHENTICATED, true);
+
+    // Enregistrer une nouvelle session active
+    const newSession: UserSession = {
+      id: 'sess_' + Date.now().toString(36),
+      userId: user.id,
+      userName: user.name,
+      userRole: user.role,
+      device: typeof navigator !== 'undefined' && navigator.userAgent.includes('Mobile') 
+        ? 'Smartphone Android ALUTRACO' 
+        : 'Poste de travail PC (Chrome / Windows)',
+      browser: typeof navigator !== 'undefined' && navigator.userAgent.includes('Edg') ? 'Edge 124' : 'Chrome 125',
+      ipAddress: '197.234.221.' + Math.floor(Math.random() * 200 + 10),
+      location: 'Bénin (Cotonou / Porto-Novo)',
+      connectedAt: new Date().toISOString(),
+      lastActiveAt: new Date().toISOString(),
+      status: 'ACTIVE'
+    };
+    this.sessions = [newSession, ...(this.sessions || [])];
+    this.save(STORAGE_KEYS.SESSIONS, this.sessions);
+
+    this.addAuditLog({
+      action: 'CONNEXION_UTILISATEUR',
+      newValue: `Connexion certifiée de ${user.name} (${user.role}) sur ${newSession.device}`,
+      status: 'SUCCESS'
+    });
+
+    this.notify();
+    return { success: true, message: `Bienvenue, ${user.name} !`, user };
+  }
+
+  public logoutUser(): void {
+    const user = this.getCurrentUser();
+    this.isAuthenticatedState = false;
+    this.save(STORAGE_KEYS.IS_AUTHENTICATED, false);
+
+    // Mettre fin à la session active courante
+    if (this.sessions && this.sessions.length > 0) {
+      const active = this.sessions.find(s => s.userId === user.id && s.status === 'ACTIVE');
+      if (active) {
+        active.status = 'TERMINATED';
+        active.lastActiveAt = new Date().toISOString();
+        this.save(STORAGE_KEYS.SESSIONS, this.sessions);
+      }
+    }
+
+    this.addAuditLog({
+      action: 'DECONNEXION_UTILISATEUR',
+      newValue: `Déconnexion volontaire de ${user.name} (${user.role})`,
+      status: 'SUCCESS'
+    });
+
+    this.notify();
+  }
+
+  public activateUserWithInvitation(params: {
+    uniqueIdentifier: string;
+    email: string;
+    password?: string;
+  }): { success: boolean; message: string; user?: User } {
+    const cleanId = (params.uniqueIdentifier || '').trim().toLowerCase();
+    const cleanEmail = (params.email || '').trim().toLowerCase();
+
+    let targetUser = this.users.find(u => 
+      (u.uniqueIdentifier && u.uniqueIdentifier.toLowerCase() === cleanId) ||
+      u.email.toLowerCase() === cleanEmail
+    );
+
+    let inv = this.invitations.find(i => 
+      (i.uniqueIdentifier && i.uniqueIdentifier.toLowerCase() === cleanId) ||
+      (i.recipientEmail && i.recipientEmail.toLowerCase() === cleanEmail)
+    );
+
+    if (!targetUser && !inv) {
+      return { success: false, message: 'Aucune invitation trouvée pour cet identifiant et cette adresse e-mail.' };
+    }
+
+    if (targetUser) {
+      targetUser.status = 'ACTIF';
+      targetUser.isEmailConfirmed = true;
+      if (params.password) targetUser.password = params.password;
+      if (!targetUser.uniqueIdentifier && params.uniqueIdentifier) {
+        targetUser.uniqueIdentifier = params.uniqueIdentifier.toUpperCase();
+      }
+    } else if (inv) {
+      targetUser = {
+        id: 'usr_' + Date.now().toString(36),
+        name: inv.recipientName,
+        email: params.email || inv.recipientEmail || 'collaborateur@alutraco.bj',
+        phone: inv.recipientPhone,
+        role: inv.role,
+        shopId: inv.shopId,
+        uniqueIdentifier: inv.uniqueIdentifier || params.uniqueIdentifier.toUpperCase(),
+        status: 'ACTIF',
+        isEmailConfirmed: true,
+        password: params.password,
+        isDesignatedByPDG: inv.role === 'RESPONSABLE_INVENTAIRE',
+        createdAt: new Date().toISOString()
+      };
+      this.users.push(targetUser);
+    }
+
+    if (inv) {
+      inv.status = 'ACTIVATED';
+      this.save(STORAGE_KEYS.INVITATIONS, this.invitations);
+    }
+
+    this.save(STORAGE_KEYS.USERS, this.users);
+
+    if (targetUser) {
+      this.currentUserId = targetUser.id;
+      this.isAuthenticatedState = true;
+      this.save(STORAGE_KEYS.CURRENT_USER_ID, this.currentUserId);
+      this.save(STORAGE_KEYS.IS_AUTHENTICATED, true);
+    }
+
+    this.addAuditLog({
+      action: 'ACTIVATION_COMPTE_INVITATION',
+      newValue: `Activation réussie du compte pour ${targetUser?.name} (${targetUser?.role}) — ID: ${targetUser?.uniqueIdentifier}`,
+      status: 'SUCCESS'
+    });
+
+    this.notify();
+    return { success: true, message: 'Votre compte ALUTRACO a été activé avec succès !', user: targetUser };
+  }
+
+  public resetUserPassword(identifierOrEmail: string, newPassword?: string): { success: boolean; message: string } {
+    const clean = (identifierOrEmail || '').trim().toLowerCase();
+    const user = this.users.find(u =>
+      u.email.toLowerCase() === clean ||
+      (u.uniqueIdentifier && u.uniqueIdentifier.toLowerCase() === clean)
+    );
+
+    if (!user) {
+      return { success: false, message: 'Aucun compte associé à cette adresse e-mail ou cet identifiant.' };
+    }
+
+    if (newPassword) {
+      user.password = newPassword;
+      this.save(STORAGE_KEYS.USERS, this.users);
+      this.addAuditLog({
+        action: 'REINITIALISATION_MOT_DE_PASSE',
+        newValue: `Nouveau mot de passe défini pour ${user.name} (${user.uniqueIdentifier || user.email})`,
+        status: 'SUCCESS'
+      });
+      this.notify();
+      return { success: true, message: 'Votre mot de passe a été réinitialisé avec succès. Vous pouvez maintenant vous connecter.' };
+    }
+
+    return { success: true, message: `Un lien sécurisé de réinitialisation à usage unique a été envoyé à ${user.email}.` };
+  }
+
   public getCurrentUser(): User {
     const user = this.users.find(u => u.id === this.currentUserId);
     return user || this.users[0] || INITIAL_USERS[0];

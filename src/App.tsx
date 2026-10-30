@@ -31,6 +31,13 @@ import { OfficialReportModal } from './components/OfficialReportModal';
 import { UserSettingsModal } from './components/modules/UserSettingsModal';
 import { Lock, ShieldAlert, ArrowRight } from 'lucide-react';
 
+// Authentification & Page de Garde ALUTRACO
+import { AlutracoLandingPage } from './components/auth/AlutracoLandingPage';
+import { AlutracoAuthModal } from './components/auth/AlutracoAuthModal';
+import { AlutracoActivationModal } from './components/auth/AlutracoActivationModal';
+import { AlutracoForgotPasswordModal } from './components/auth/AlutracoForgotPasswordModal';
+import { AlutracoDevicesModal } from './components/auth/AlutracoDevicesModal';
+
 export const App: React.FC = () => {
   const store = useALUStore();
   const currentUser = store.getCurrentUser();
@@ -60,6 +67,54 @@ export const App: React.FC = () => {
   const [showSecurityGuide, setShowSecurityGuide] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [selectedReportInventory, setSelectedReportInventory] = useState<Inventory | null>(null);
+
+  // Modals d'authentification et de sécurité
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  const [showActivationModal, setShowActivationModal] = useState(false);
+  const [showForgotPasswordModal, setShowForgotPasswordModal] = useState(false);
+  const [showDevicesModal, setShowDevicesModal] = useState(false);
+
+  // Si l'utilisateur n'est pas encore connecté, afficher la PAGE DE GARDE professionnelle
+  if (!store.isAuthenticated()) {
+    return (
+      <>
+        <AlutracoLandingPage
+          onOpenLogin={() => setShowAuthModal(true)}
+          onOpenActivation={() => setShowActivationModal(true)}
+        />
+
+        <AlutracoAuthModal
+          isOpen={showAuthModal}
+          onClose={() => setShowAuthModal(false)}
+          onOpenActivation={() => {
+            setShowAuthModal(false);
+            setShowActivationModal(true);
+          }}
+          onOpenForgotPassword={() => {
+            setShowAuthModal(false);
+            setShowForgotPasswordModal(true);
+          }}
+        />
+
+        <AlutracoActivationModal
+          isOpen={showActivationModal}
+          onClose={() => setShowActivationModal(false)}
+          onSuccess={() => {
+            setShowActivationModal(false);
+          }}
+        />
+
+        <AlutracoForgotPasswordModal
+          isOpen={showForgotPasswordModal}
+          onClose={() => setShowForgotPasswordModal(false)}
+          onBackToLogin={() => {
+            setShowForgotPasswordModal(false);
+            setShowAuthModal(true);
+          }}
+        />
+      </>
+    );
+  }
 
   // Synchroniser le module par défaut lors d'un changement de profil dans le coin droit
   useEffect(() => {
@@ -241,6 +296,8 @@ export const App: React.FC = () => {
           onToggleSidebar={() => setSidebarOpen(!sidebarOpen)}
           onOpenSettings={() => setShowSettings(true)}
           onToggleAdminView={() => setIsAdminConsoleView(!isAdminConsoleView)}
+          onOpenDevices={() => setShowDevicesModal(true)}
+          onLogout={() => store.logoutUser()}
         />
 
         {/* Contenu du module sélectionné */}
@@ -262,6 +319,13 @@ export const App: React.FC = () => {
         <OfficialReportModal
           inventory={selectedReportInventory}
           onClose={() => setSelectedReportInventory(null)}
+        />
+      )}
+
+      {showDevicesModal && (
+        <AlutracoDevicesModal
+          isOpen={showDevicesModal}
+          onClose={() => setShowDevicesModal(false)}
         />
       )}
     </div>

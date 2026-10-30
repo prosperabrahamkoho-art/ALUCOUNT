@@ -4,12 +4,14 @@ import {
   Bell,
   Menu,
   Settings,
-  Crown
+  Crown,
+  Laptop,
+  LogOut,
+  ShieldCheck
 } from 'lucide-react';
 import { useALUStore } from '../services/store';
 import { UserRole, ModuleId } from '../types';
 import { ALUCOUNT_MODULES } from '../data/modulesConfig';
-import { ShieldCheck } from 'lucide-react';
 
 interface HeaderProps {
   activeModule: ModuleId;
@@ -19,6 +21,8 @@ interface HeaderProps {
   onToggleSidebar: () => void;
   onOpenSettings?: () => void;
   onToggleAdminView?: () => void;
+  onOpenDevices?: () => void;
+  onLogout?: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -29,6 +33,8 @@ export const Header: React.FC<HeaderProps> = ({
   onToggleSidebar,
   onOpenSettings,
   onToggleAdminView,
+  onOpenDevices,
+  onLogout,
 }) => {
   const store = useALUStore();
   const currentUser = store.getCurrentUser();
@@ -213,6 +219,19 @@ export const Header: React.FC<HeaderProps> = ({
             <span className="nav-label-desktop">Mon Profil</span>
           </button>
 
+          {/* Mes appareils & sessions */}
+          {onOpenDevices && (
+            <button
+              onClick={onOpenDevices}
+              className="btn btn-secondary btn-sm"
+              style={{ display: 'flex', alignItems: 'center', gap: '6px' }}
+              title="Gérer mes postes de travail, tablettes et smartphones connectés"
+            >
+              <Laptop size={15} color="#059669" />
+              <span className="nav-label-desktop">Mes Appareils</span>
+            </button>
+          )}
+
           {/* Guide sécurité */}
           <button
             onClick={onOpenSecurityGuide}
@@ -222,6 +241,26 @@ export const Header: React.FC<HeaderProps> = ({
             <HelpCircle size={15} />
             <span className="nav-label-desktop">Principes &amp; Règles</span>
           </button>
+
+          {/* Bouton Se Déconnecter */}
+          {onLogout && (
+            <button
+              onClick={onLogout}
+              className="btn btn-secondary btn-sm"
+              style={{ 
+                display: 'flex', 
+                alignItems: 'center', 
+                gap: '6px',
+                color: '#dc2626',
+                borderColor: '#fecaca',
+                backgroundColor: '#fff5f5'
+              }}
+              title="Fermer ma session et revenir à la page de garde"
+            >
+              <LogOut size={14} />
+              <span className="nav-label-desktop">Déconnexion</span>
+            </button>
+          )}
 
           {/* Switcher de rôle */}
           <div className="role-switcher">
